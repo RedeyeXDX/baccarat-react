@@ -40,3 +40,25 @@
 .read-the-docs {
   color: #888;
 }
+
+.scoreboard{
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+
+h3{
+  margin: 5px
+}
+
+img{
+  height: 175px;
+  width: 125px;
+}
+
+.cardimg{
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  margin: 5px;
+}
