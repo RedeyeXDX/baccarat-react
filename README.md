@@ -1,4 +1,5 @@
 # Rocket Academy Coding Bootcamp: High Card
+<!-- Is this High Card or Baccarat? :D I think can add more description about your project here as well -->
 
 ## Available Scripts
 
