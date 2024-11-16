@@ -4,11 +4,11 @@ import { makeShuffledDeck } from "./utils.jsx";
 import { useState } from "react";
 
 function App() {
-  // Set default value of card deck to new shuffled deck
+  // redundant comment
   const [cardDeck, setCardDeck] = useState(makeShuffledDeck());
-  // currCards holds the cards from the current round
-  const [player1Cards, setplayer1Cards] = useState(null);
-  const [player2Cards, setplayer2Cards] = useState(null);
+  // redundant comment
+  const [player1Cards, setplayer1Cards] = useState(null); // I would recommend always putting the data structure this app defines here. e.g. {}, [], "", 0
+  const [player2Cards, setplayer2Cards] = useState(null); // that is easier to understand than null
   const [player1Score, setplayer1Score] = useState(0);
   const [player2Score, setplayer2Score] = useState(0);
   const [playerTies, setPlayerTies] = useState(0);
@@ -16,6 +16,27 @@ function App() {
   const [gameOver, setGameOver] = useState(false)
 
   const resetGame = () => {
+    // maybe we can have a single gameState object, that contains all this information instead of so many state variables
+    // then I can create a default gameState
+    /* 
+      const defaultGameState = {
+        cardDeck: makeShuffledDeck(),
+        playerOne: {
+          cards: [],
+          score: 0,
+        },
+        playerTwo: {
+          cards: [],
+          score: 0,
+        },
+        ties: 0,
+        gameOver: false,
+        winner: null
+      }
+
+      and then just update State like: setGameState(defaultGameState)
+
+    */
     setCardDeck(makeShuffledDeck())
     setplayer1Cards(null);
     setplayer2Cards(null);
@@ -27,6 +48,7 @@ function App() {
   }
 
   const dealCards = () => {
+    // add some comment here describing what the early return is for. Such early returns are very good practice!
     if (cardDeck.length < 2) {
       setGameOver(true);
       finalWinner();
@@ -44,6 +66,15 @@ function App() {
   };
 
   const checkWinner = (card1, card2) => {
+    /* 
+      here we could also use early returns potentially
+
+      if (card1.rank === card2.rank) return setPlayerTies(playerTies + 1)
+      if (card1.rank > card2.rank) return setPlayer1Score(player1Score +1)
+      setPlayer2Score(player2Score +1)
+
+      More of a subjective comment, but I prefer if statements over if else spaghetti
+    */
     if (card1.rank > card2.rank){
       setplayer1Score(player1Score + 1)
     } else if (card2.rank > card1.rank){
@@ -62,9 +93,8 @@ function App() {
       setWinner("It is Ties")
     }
   }
-  // You can write JavaScript here, just don't try and set your state!
 
-  // You can access your current components state here, as indicated below
+// this here is returning html. I think no need to store in a variable. I would rather store it in a separate component instead
   const currCardElems = player1Cards && player2Cards && (
     <div className="cardimg">
       <div>
