@@ -1,113 +1,219 @@
-import "./App.css";
-import logo from "/logo.png";
-import { makeShuffledDeck } from "./utils.jsx";
-import { useState } from "react";
+import { useEffect, useState } from 'react'
+import './App.css'
+import { makeShuffledDeck } from './utils.jsx'
+
+//game rule
+//Each hand starts with 2 cards and a third may optionally be dealt. The values are summed and the nearest to 9 wins. Where the sum goes beyond 9, the value returns to 0 instead of going to 10 e.g. A pair of cards 6 and 7 has a value of 3, not 13 and three cards 9, 6 and 9 have a value of 4.
 
 function App() {
-  // Set default value of card deck to new shuffled deck
+  // carddeck for the shuffle deck function
   const [cardDeck, setCardDeck] = useState(makeShuffledDeck());
-  // currCards holds the cards from the current round
-  const [player1Cards, setplayer1Cards] = useState(null);
-  const [player2Cards, setplayer2Cards] = useState(null);
-  const [player1Score, setplayer1Score] = useState(0);
-  const [player2Score, setplayer2Score] = useState(0);
-  const [playerTies, setPlayerTies] = useState(0);
-  const [winner , setWinner] = useState(null);
-  const [gameOver, setGameOver] = useState(false)
+  //set player card value and the total card value in player
+  const [playerCard, setPlayerCard] = useState([]);
+  const [playerTotal, setPlayerTotal] = useState(0)
+  const [bankerCard, setBankerCard] = useState([]);
+  const [bankerTotal, setBankerTotal] = useState(0);
+  const [winner, setWinner] = useState(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameStart, setGameStart] = useState(false);
+  const [dealClick, setDealClick] = useState(false);
+  const [drawCard, setdrawCard] = useState(false);
+  const [bet, setbet] = useState(false);
+  const [balance, setBalance] = useState(100)
+  const [playerBet, setPlayerBet] = useState(false);
+  const [bankerBet, setBankerBet] = useState(false);
+  const [betAmount, setbetAmount] = useState(0);
+  const [selectSide, setSelectSide] = useState(null);
+
+  const betInput = () => {
+    if (betAmount > 0 && betAmount <= balance) {
+      setBalance(balance - betAmount);
+      setbet(true);
+    };
+  }
 
   const resetGame = () => {
     setCardDeck(makeShuffledDeck())
-    setplayer1Cards(null);
-    setplayer2Cards(null);
-    setplayer1Score(0);
-    setplayer2Score(0);
-    setPlayerTies(0);
+    setPlayerCard([]);
+    setPlayerTotal(0);
+    setBankerCard([]);
+    setBankerTotal(0);
     setGameOver(false);
     setWinner(null);
-  }
-
-  const dealCards = () => {
-    if (cardDeck.length < 2) {
-      setGameOver(true);
-      finalWinner();
-      return
-    }
-    const player1Draw = cardDeck[0];
-    const player2Draw = cardDeck[1];
-
-    setplayer1Cards(player1Draw);
-    setplayer2Cards(player2Draw);
-
-    setCardDeck(cardDeck.slice(2));
-
-    checkWinner(player1Draw,player2Draw)
+    setGameStart(false);
+    setDealClick(false);
+    setdrawCard(false);
+    setbet(false);
+    setPlayerBet(false);
+    setBankerBet(false);
+    setbetAmount(0);
+    setSelectSide(null);
   };
 
-  const checkWinner = (card1, card2) => {
-    if (card1.rank > card2.rank){
-      setplayer1Score(player1Score + 1)
-    } else if (card2.rank > card1.rank){
-      setplayer2Score(player2Score + 1)
+  const calculateTotal = (total) => {
+    while (total > 9) {
+      total -= 10;
+    }
+    return total;
+  }
+
+  const dealCard = () => {
+    const playerDraw1 = cardDeck[0];
+    const playerDraw2 = cardDeck[1];
+    const bankerDraw1 = cardDeck[2];
+    const bankerDraw2 = cardDeck[3];
+
+    setPlayerCard([playerDraw1, playerDraw2]);
+    const addPlayerTotal = playerDraw1.rank + playerDraw2.rank;
+    const checkPlayerTotal = calculateTotal(addPlayerTotal);
+    setPlayerTotal(checkPlayerTotal);
+
+    setBankerCard([bankerDraw1, bankerDraw2]);
+    const addBankerTotal = bankerDraw1.rank + bankerDraw2.rank;
+    const checkBankerTotal = calculateTotal(addBankerTotal);
+    setBankerTotal(checkBankerTotal);
+
+    setCardDeck(cardDeck.slice(4));
+    setGameStart(true);
+    setDealClick(true);
+  };
+
+  const playerHit = () => {
+    setdrawCard(true);
+    const playerDraw1 = cardDeck[0];
+    const bankerDraw1 = cardDeck[1];
+    setPlayerCard([...playerCard, playerDraw1]);
+    setPlayerTotal(prevTotal => calculateTotal(prevTotal + playerDraw1.rank));
+    if (bankerTotal <= 5) {
+      setBankerCard([...bankerCard, bankerDraw1]);
+      setBankerTotal(prevTotal => calculateTotal(prevTotal + bankerDraw1.rank))
+    };
+    setCardDeck(cardDeck.slice(2));
+    setdrawCard(false);
+    setGameOver(true)
+  };
+
+  const bankerHit = () => {
+    setdrawCard(true);
+    const bankerDraw1 = cardDeck[0];
+    const playerDraw1 = cardDeck[1];
+    setBankerCard([...bankerCard, bankerDraw1]);
+    setBankerTotal(prevTotal => calculateTotal(prevTotal + bankerDraw1.rank));
+    if (playerTotal <= 5) {
+      setPlayerCard([...playerCard, playerDraw1]);
+      setPlayerTotal(prevTotal => calculateTotal(prevTotal + playerDraw1.rank))
+    };
+    setCardDeck(cardDeck.slice(2));
+    setGameOver(true);
+  };
+
+  useEffect(() => {
+    if (gameStart && !gameOver) {
+      if (playerTotal === 8 || playerTotal === 9) {
+        setWinner("Player Wins");
+        setGameOver(true);
+      } else if (bankerTotal === 8 || bankerTotal === 9) {
+        setWinner("Banker Wins");
+        setGameOver(true);
+      }
+    }
+  }, [playerTotal, bankerTotal, gameStart, gameOver]);
+
+  useEffect(() => {
+    if (gameOver) {
+      if (playerTotal > bankerTotal) {
+        setWinner("Player Wins");
+      } else if (bankerTotal > playerTotal) {
+        setWinner("Banker Wins");
+      } else {
+        setWinner("It a Push");
+      }
+    }
+  }, [playerTotal, bankerTotal, gameOver]);
+
+  const winnerWinner = () => {
+    if (selectSide === "Player" && winner === "Player Wins") {
+      setBalance(prevBalance => prevBalance + betAmount * 2);
+    } else if (selectSide === "Banker" && winner === "Banker Wins") {
+      setBalance(prevBalance => prevBalance + betAmount * 2);
+    } else if (winner === "It a Push") {
+      setBalance(prevBalance => prevBalance + betAmount);
+    };
+  };
+
+  const stayButton = () => {
+    setGameOver(true);
+    if (playerTotal > bankerTotal) {
+      setWinner("Player Wins");
+      setGameOver(true);
+    } else if (bankerTotal > playerTotal) {
+      setWinner("Banker Wins");
+      setGameOver(true);
     } else {
-      setPlayerTies(playerTies + 1)
+      setWinner("It a Push");
+      setGameOver(true);
     }
   }
 
-  const finalWinner = () =>{
-    if (player1Score > player2Score) {
-      setWinner("Player 1 Wins")
-    } else if (player1Score < player2Score){
-      setWinner("Player 2 Wins")
-    } else {
-      setWinner("It is Ties")
+  useEffect(() => {
+    if (gameOver && winner) {
+      winnerWinner();
     }
-  }
-  // You can write JavaScript here, just don't try and set your state!
-
-  // You can access your current components state here, as indicated below
-  const currCardElems = player1Cards && player2Cards && (
-    <div className="cardimg">
-      <div>
-        Player 1: 
-        <div>
-            <img src={player1Cards.img}/>          
-        </div>
-      </div>
-      <div>
-        Player 2: 
-      <div>
-          <img src={player2Cards.img}/>
-      </div>        
-      </div>
-
-    </div>
-  )
+  }, [gameOver, winner]);
 
   return (
     <>
+      <h1>baccarat</h1>
+      <h4>Total Balance : {balance}</h4>
+      <h3>please Select which to bet</h3>
+
       <div>
-        <img src={logo} className="logo" alt="Rocket logo" />
+        <input
+          type="text"
+          value={betAmount}
+          onChange={(event) => setbetAmount(Number(event.target.value))}
+          placeholder='Enter bet Amount'
+        />
+        <button onClick={betInput} disabled={gameStart || betAmount <= 0}>Bet</button>
       </div>
-      <div className="card">
-        <h2>React High Card 🚀</h2>
-      </div>
-      {gameOver && (
-        <div>
-          <h1>Game Over</h1>
-          <h1>{winner}</h1>
-        </div>
-      )}
-      <div className="scoreboard">
-        <h3>Player 1 Score: {player1Score}</h3>
-        <h3>Player 2 Score: {player2Score}</h3>
-        <h3>Player Ties: {playerTies}</h3>
+
+      <div>
+        <button onClick={() => { setSelectSide("Player"); setPlayerBet(true); dealCard(); }} disabled={!bet || gameStart}>Player</button>
+        <button onClick={() => { setSelectSide("Banker"); setBankerBet(true); dealCard(); }} disabled={!bet || gameStart}>Banker</button>
       </div>
       <div>
-        <button onClick={gameOver? resetGame : dealCards}>{gameOver ? "Reset Game" : "Deal"}</button>
+        {gameStart && (
+          <>
+            <div className="winner">
+              {winner && <h3>{winner}</h3>}
+            </div>
+            <div className='gamediv'>
+              <div className="playerDiv">
+                <h3>Player :</h3>
+                <h5>Total: {playerTotal}</h5>
+                {playerCard.map((card, index) => (
+                  <img key={index} src={card.img} />
+                ))}
+                <button onClick={playerHit} disabled={gameOver || bankerBet}>Player Hit</button>
+                <button onClick={stayButton} disabled={gameOver || bankerBet}>Stay</button>
+              </div>
+              <div className='bankerDiv'>
+                <h3>Banker :</h3>
+                <h5>Total: {bankerTotal}</h5>
+                {bankerCard.map((card, index) => (
+                  <img key={index} src={card.img} />
+                ))}
+                <button onClick={bankerHit} disabled={gameOver || playerBet}>Dealer Hit</button>
+                <button onClick={stayButton} disabled={gameOver || playerBet}>Stay</button>
+              </div>
+            </div>
+            {gameOver && <button onClick={resetGame}>Reset</button>}
+          </>
+        )}
       </div>
-      <div>{currCardElems}</div>
+
     </>
-  );
+  )
 }
 
-export default App;
+export default App

@@ -42,13 +42,16 @@ const makeDeck = () => {
       if (cardName === "1") {
         cardName = "A";
         // Ace has higher rank than all other cards
-        cardRank = 14;
+        cardRank = 1;
       } else if (cardName === "11") {
         cardName = "J";
+        cardRank = 10;
       } else if (cardName === "12") {
         cardName = "Q";
+        cardRank = 10;
       } else if (cardName === "13") {
         cardName = "K";
+        cardRank = 10;
       }
 
       const imgPath = `./cards/${cardName}-${currentSuit}.png`;
